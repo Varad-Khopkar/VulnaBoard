@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Analysis Report | {{ hash }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <div class="container mt-4">
+        <a href="/" class="btn btn-outline-secondary mb-3 rounded-0 btn-sm">← DASHBOARD</a>
+
+        <div class="card shadow-none">
+            <div
+                class="card-header d-flex justify-content-between align-items-center bg-transparent border-bottom border-secondary">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-primary bg-opacity-25 text-primary border border-primary px-3 py-2 fw-bold"
+                        style="font-family: 'Rajdhani';">THREAT DETECTED
+                    </div>
+                    <h3 class="mb-0 text-white brand-font">ANALYSIS REPORT</h3>
+                </div>
+                {% if threat %}
+                <span
+                    class="badge bg-transparent border border-danger text-danger fs-6 px-3 py-1 rounded-0 text-uppercase">{{
+                    threat.severity }} SEVERITY</span>
+                {% else %}
+                <span class="badge bg-secondary rounded-0 text-white">UNKNOWN ARTIFACT</span>
+                {% endif %}
+            </div>
+
+            <div class="card-body p-4">
+
+                <div class="row align-items-center mb-4 pb-4 border-bottom border-secondary">
+                    <div class="col-md-2 text-muted text-uppercase fw-bold small">Artifact Hash</div>
+                    <div class="col-md-10">
+                        <code class="fs-5 text-white bg-black px-2 py-1 border border-secondary">{{ hash }}</code>
+                        {% if threat and threat.hash != hash %}
+                        <span class="text-muted ms-2 small">| Matched: {{ threat.hash }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if threat %}
+                <div class="row g-5">
+                    <div class="col-md-5">
+                        <h5 class="text-cyan mb-3 text-uppercase">Threat Metadata</h5>
+                        <div class="p-0">
+                            <table class="table table-dark table-sm table-borderless">
+                                <tr>
+                                    <td class="text-muted w-25">NAME</td>
+                                    <td class="fw-bold fs-5 text-white">{{ threat.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">TYPE</td>
+                                    <td><span class="badge border border-secondary text-light fw-normal rounded-0">{{
+                                            threat.type|upper }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">STATUS</td>
+                                    <td class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>
+                                        IDENTIFIED</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="col-md-7 border-start border-secondary ps-5">
+                        <h5 class="text-cyan mb-3 text-uppercase">Intel / Description</h5>
+                        <p class="text-light small">{{ threat.description }}</p>
+
+                        <h6 class="mt-4 mb-2 text-muted text-uppercase small fw-bold">Associated Vulnerabilities (CVE)
+                        </h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% if threat.related_cves %}
+                            {% for cve in threat.related_cves.split(';') %}
+                            {% if cve.strip() %}
+                            <a href="/?q={{ cve.strip() }}" class="cve-badge text-decoration-none small">{{ cve.strip()
+                                }}</a>
+                            {% endif %}
+                            {% endfor %}
+                            {% else %}
+                            <span class="text-muted fst-italic small">No specific CVEs linked.</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5 text-end border-top border-secondary pt-3">
+                    <form action="/enrich/{{ threat.hash or hash }}" method="POST">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm rounded-0">
+                            <i class="bi bi-arrow-clockwise me-1"></i>UPDATE INTEL (OSINT)
+                        </button>
+                    </form>
+                </div>
+
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3 text-cyan display-4 fw-bold">!</div>
+                    <h4 class="text-white mb-2 text-uppercase">Unknown Artifact</h4>
+                    <p class="text-muted mb-4 small">No matches found in local threat database.</p>
+
+                    <form action="/enrich/{{ hash }}" method="POST">
+                        <button type="submit" class="btn btn-primary rounded-0 px-5 py-3 fw-bold">
+                            INITIATE GLOBAL SEARCH (OSINT)
+                        </button>
+                        <div class="mt-2 text-muted small fst-italic">Cross-check against public repositories</div>
+                    </form>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div id="toast-container">
+        {% for message in messages %}
+        <div class="alert alert-dark border-danger text-white mb-3 toast-notification d-flex align-items-center gap-3">
+            <div class="fs-4"><i class="bi bi-info-circle-fill"></i></div>
+            <div>{{ message }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const toasts = document.querySelectorAll('.toast-notification');
+            toasts.forEach(toast => {
+                setTimeout(() => {
+                    toast.classList.add('hide-toast');
+                    setTimeout(() => toast.remove(), 500);
+                }, 4000);
+            });
+        });
+    </script>
+    {% endif %}
+    {% endwith %}
+
+</body>
+
+</html>

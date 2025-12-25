@@ -1,0 +1,163 @@
+/* Cyberpunk / Threat Intel Theme */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Orbitron:wght@400;700&display=swap');
+
+:root {
+    --bg-dark: #0a0a0f;
+    --bg-card: #13131f;
+    --neon-cyan: #00f3ff;
+    --neon-purple: #bc13fe;
+    --neon-red: #ff003c;
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0b0;
+    --border-color: #2a2a35;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    background-image: 
+        radial-gradient(circle at 10% 20%, rgba(188, 19, 254, 0.05) 0%, transparent 20%),
+        radial-gradient(circle at 90% 80%, rgba(0, 243, 255, 0.05) 0%, transparent 20%);
+}
+
+h1, h2, h3, h4, h5, h6, .brand-font {
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 1px;
+}
+
+/* Navbar */
+.navbar {
+    background: rgba(10, 10, 15, 0.8);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.navbar-brand {
+    color: var(--neon-cyan) !important;
+    text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+    font-weight: 700;
+}
+
+/* Cards (Glassmorphism) */
+.card {
+    background: rgba(19, 19, 31, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    color: var(--text-primary);
+    border-radius: 12px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+}
+
+.card-header {
+    background: transparent;
+    border-bottom: 1px solid var(--border-color);
+    font-family: 'Orbitron', sans-serif;
+}
+
+/* Forms & Inputs */
+.form-control {
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.form-control:focus {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-color: var(--neon-purple);
+    box-shadow: 0 0 10px rgba(188, 19, 254, 0.3);
+    color: white;
+}
+
+/* Buttons */
+.btn-primary {
+    background: linear-gradient(45deg, var(--neon-purple), #9d00e0);
+    border: none;
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-primary:hover {
+    box-shadow: 0 0 20px rgba(188, 19, 254, 0.6);
+}
+
+.btn-cyan {
+    background: linear-gradient(45deg, var(--neon-cyan), #00a8b0);
+    color: black;
+    border: none;
+    font-weight: bold;
+}
+
+.btn-cyan:hover {
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.6);
+    color: black;
+}
+
+/* Table */
+.table {
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+.table-hover tbody tr:hover {
+    color: white;
+    background-color: rgba(0, 243, 255, 0.05);
+}
+.table-dark {
+    background-color: #1a1a25;
+    color: var(--neon-cyan);
+}
+
+/* Utils */
+.text-muted {
+    color: var(--text-secondary) !important;
+}
+
+.text-cyan {
+    color: var(--neon-cyan);
+}
+
+.cve-badge {
+    border: 1px solid var(--neon-purple);
+    color: var(--neon-purple);
+    background: rgba(188, 19, 254, 0.1);
+    transition: all 0.2s;
+}
+.cve-badge:hover {
+    background: var(--neon-purple);
+    color: white;
+    box-shadow: 0 0 10px var(--neon-purple);
+}
+
+/* Severity Colors */
+.severity-critical { color: var(--neon-red); text-shadow: 0 0 5px var(--neon-red); }
+.severity-high { color: #ff9100; }
+.severity-medium { color: #ffea00; }
+.severity-low { color: #00ff00; }
+
+/* Analysis Input specific */
+.hash-input-container {
+    background: linear-gradient(90deg, rgba(19,19,31,0.9) 0%, rgba(30,30,45,0.9) 100%);
+    padding: 30px;
+    border-radius: 15px;
+    border: 1px solid var(--neon-cyan);
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+}
+
+/* Animations */
+@keyframes pulse-glow {
+    0% { box-shadow: 0 0 5px var(--neon-cyan); }
+    50% { box-shadow: 0 0 20px var(--neon-cyan); }
+    100% { box-shadow: 0 0 5px var(--neon-cyan); }
+}
+
+.glow-effect:focus {
+    animation: pulse-glow 2s infinite;
+}

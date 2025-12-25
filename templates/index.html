@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>S.H.I.E.L.D | Threat Intelligence</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        function updatePerPage(val) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('per_page', val);
+            url.searchParams.set('page', 1); // Reset to page 1
+            window.location.href = url.toString();
+        }
+    </script>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4 px-4 sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+                <span class="text-cyan fw-bold fs-2" style="font-family: 'Rajdhani';">VULNA</span><span
+                    class="text-white fs-2" style="font-family: 'Jost'; font-weight: 300;">BOARD</span>
+            </a>
+            <div class="ms-auto d-flex align-items-center gap-3">
+                <span class="text-muted small text-uppercase fw-bold">System Status</span>
+                <span
+                    class="badge bg-transparent border border-success text-success rounded-pill px-3 py-1">OPERATIONAL</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4">
+
+        <!-- Hero / Stats Section -->
+        <div class="row mb-4 g-4">
+            <div class="col-md-9">
+                <div class="hash-input-container h-100">
+                    <h3 class="mb-3 text-uppercase fw-bold"><i class="bi bi-search me-2"></i>Threat Intelligence Lookup
+                    </h3>
+                    <p class="text-muted mb-4">Investigate IOCs (Indicators of Compromise) against the global
+                        vulnerability database.</p>
+                    <form action="/analyze" method="POST" class="d-flex gap-0">
+                        <input type="text" name="hash" class="form-control form-control-lg rounded-0 border-end-0"
+                            placeholder="ENTER MD5 / SHA256 HASH..." required style="height: 50px;">
+                        <button type="submit" class="btn btn-primary px-4 rounded-0"
+                            style="height: 50px;">ANALYZE</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div
+                    class="card h-100 p-4 text-center border-start-0 border-end-0 border-top-0 border-bottom-0 bg-transparent">
+                    <h6 class="text-cyan text-uppercase fw-bold mb-3">Active Vulnerabilities</h6>
+                    <h1 class="display-3 fw-bold text-white mb-0">{{ total_items }}</h1>
+                    <hr class="border-secondary w-50 mx-auto my-3">
+                    <a href="{{ url_for('refresh') }}" class="btn btn-sm btn-outline-secondary w-100 rounded-pill"><i
+                            class="bi bi-arrow-repeat me-1"></i>SYNC DATABASE</a>
+                </div>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div id="toast-container">
+            {% for message in messages %}
+            <div
+                class="alert alert-dark border-danger text-white mb-3 toast-notification d-flex align-items-center gap-3">
+                <div class="fs-4"><i class="bi bi-info-circle-fill"></i></div>
+                <div>{{ message }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        <script>
+            // Auto-dismiss toasts after 4 seconds
+            document.addEventListener("DOMContentLoaded", function () {
+                const toasts = document.querySelectorAll('.toast-notification');
+                toasts.forEach(toast => {
+                    setTimeout(() => {
+                        toast.classList.add('hide-toast');
+                        setTimeout(() => toast.remove(), 500); // Remove from DOM after fade out
+                    }, 4000);
+                });
+            });
+        </script>
+        {% endif %}
+        {% endwith %}
+
+        <!-- Filter Bar -->
+        <div
+            class="card p-3 mb-4 rounded-0 border-start-0 border-end-0 border-top-0 border-bottom-1 border-secondary bg-transparent">
+            <form method="get" action="/" class="row g-3 align-items-center">
+                <div class="col-md-5">
+                    <input type="text" name="q" class="form-control rounded-0"
+                        placeholder="Search Keywords (e.g. apache, rcp)..." value="{{ query }}">
+                </div>
+                <div class="col-md-2">
+                    <input type="number" name="year" class="form-control rounded-0" placeholder="Year"
+                        value="{{ year_filter }}">
+                </div>
+
+                <div class="col-md-2">
+                    <select class="form-control rounded-0 bg-black text-white border-secondary"
+                        onchange="updatePerPage(this.value)">
+                        <option value="10" {% if per_page==10 %}selected{% endif %}>Show 10 Rows</option>
+                        <option value="20" {% if per_page==20 %}selected{% endif %}>Show 20 Rows</option>
+                        <option value="50" {% if per_page==50 %}selected{% endif %}>Show 50 Rows</option>
+                        <option value="100" {% if per_page==100 %}selected{% endif %}>Show 100 Rows</option>
+                    </select>
+                </div>
+
+                <div class="col-md-1 d-grid">
+                    <button type="submit" class="btn btn-primary rounded-0">FILTER</button>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="button" class="btn btn-outline-secondary rounded-0" data-bs-toggle="modal"
+                        data-bs-target="#importModal"><i class="bi bi-folder2-open me-2"></i>IMPORT</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Main CVE Table -->
+        <div class="card p-0 bg-transparent border-0">
+            <!-- Table Header with Sort Links -->
+            <div class="table-responsive">
+                <table class="table table-hover table-dark align-middle mb-0"
+                    style="border-collapse: separate; border-spacing: 0 5px;">
+                    <thead>
+                        <tr class="text-uppercase small text-muted border-bottom border-secondary">
+                            <th class="py-3 ps-3 text-cyan">CVE ID</th>
+                            <th class="py-3">DESCRIPTION</th>
+                            <th class="py-3" style="width: 150px;">
+                                <a href="{{ url_for('index', q=query, year=year_filter, page=1, per_page=per_page, sort='date', order='asc' if sort_by=='date' and sort_order=='desc' else 'desc') }}"
+                                    class="text-decoration-none text-muted fw-bold d-block w-100">
+                                    PUBLISHED
+                                    {% if sort_by == 'date' %}
+                                    <i
+                                        class="bi bi-caret-{{ 'down' if sort_order=='desc' else 'up' }}-fill text-white ms-1"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th class="py-3 text-end pe-3" style="width: 150px;">
+                                <a href="{{ url_for('index', q=query, year=year_filter, page=1, per_page=per_page, sort='score', order='asc' if sort_by=='score' and sort_order=='desc' else 'desc') }}"
+                                    class="text-decoration-none text-muted fw-bold d-block w-100 text-end">
+                                    CVSS SCORE
+                                    {% if sort_by == 'score' %}
+                                    <i
+                                        class="bi bi-caret-{{ 'down' if sort_order=='desc' else 'up' }}-fill text-white ms-1"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if cves %}
+                        {% for cve in cves %}
+                        <!-- Parse Score for Color Logic -->
+                        {% set score = cve[3] %}
+                        {% set score_val = 0.0 %}
+                        {% set badge_class = 'badge-score-na' %}
+
+                        {% if score != 'N/A' %}
+                        {% set score_val = score|float %}
+                        {% if score_val >= 9.0 %}
+                        {% set badge_class = 'badge-score-critical' %}
+                        {% elif score_val >= 7.0 %}
+                        {% set badge_class = 'badge-score-high' %}
+                        {% elif score_val >= 4.0 %}
+                        {% set badge_class = 'badge-score-medium' %}
+                        {% else %}
+                        {% set badge_class = 'badge-score-low' %}
+                        {% endif %}
+                        {% endif %}
+
+                        <tr class="bg-black border border-secondary shadow-sm"
+                            style="cursor: pointer; transition: transform 0.1s;"
+                            onclick="openCveModal('{{ cve[0] }}', `{{ cve[1] }}`, '{{ cve[2] }}', '{{ score }}', '{{ badge_class }}')">
+                            <td
+                                class="ps-3 py-3 fw-bold text-white font-monospace border-start border-3 {{ 'border-danger' if score_val >= 9.0 else 'border-secondary' }}">
+                                {{ cve[0] }}</td>
+                            <td class="py-3 text-secondary small">{{ cve[1][:120] }}...</td>
+                            <td class="py-3 font-monospace small text-white">{{ cve[2][:10] }}</td>
+                            <td class="pe-3 py-3 text-end">
+                                <span class="badge rounded-pill px-3 py-2 {{ badge_class }} font-monospace fs-6">{{
+                                    score }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5">
+                                <h3 class="text-muted">NO DATA AVAILABLE</h3>
+                                <p>Try refreshing the database or adjusting filters.</p>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link bg-black border-secondary text-white rounded-0"
+                            href="{{ url_for('index', q=query, year=year_filter, page=page-1, per_page=per_page, sort=sort_by, order=sort_order) }}">PREV</a>
+                    </li>
+                    {% endif %}
+
+                    <li class="page-item disabled">
+                        <span class="page-link bg-transparent border-0 text-muted">PAGE {{ page }} OF {{ total_pages
+                            }}</span>
+                    </li>
+
+                    {% if page < total_pages %} <li class="page-item">
+                        <a class="page-link bg-black border-secondary text-white rounded-0"
+                            href="{{ url_for('index', q=query, year=year_filter, page=page+1, per_page=per_page, sort=sort_by, order=sort_order) }}">NEXT</a>
+                        </li>
+                        {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- Details Modal -->
+    <div class="modal fade" id="cveModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content bg-dark border-secondary text-white rounded-0 shadow-lg">
+                <div class="modal-header border-bottom border-secondary bg-black">
+                    <div class="d-flex align-items-center gap-3">
+                        <span id="modalCveId" class="fs-4 fw-bold font-monospace text-cyan">CVE-XXXX-XXXX</span>
+                        <span id="modalScoreBadge" class="badge rounded-pill px-3">N/A</span>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 bg-dark">
+                    <h6 class="text-muted text-uppercase small mb-2">Description</h6>
+                    <p id="modalDesc" class="lead fs-6 text-light mb-4" style="line-height: 1.6;"></p>
+
+                    <div class="row g-3">
+                        <div class="col-md-6 border-end border-secondary">
+                            <h6 class="text-muted text-uppercase small">Published Date</h6>
+                            <p id="modalDate" class="font-monospace text-white fs-5 mb-0"></p>
+                        </div>
+                        <div class="col-md-6 ps-4">
+                            <h6 class="text-muted text-uppercase small">Reference Links</h6>
+                            <div class="d-flex gap-2 mt-2">
+                                <a id="nvdLink" href="#" target="_blank"
+                                    class="btn btn-sm btn-outline-danger rounded-0">NVD DETAILS <i
+                                        class="bi bi-box-arrow-up-right ms-1"></i></a>
+                                <form id="iosintForm" action="/enrich/" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary rounded-0">OSINT SCAN
+                                        <i class="bi bi-search ms-1"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Import Modal -->
+    <div class="modal fade" id="importModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark border-white text-white rounded-0">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title brand-font">IMPORT THREAT FEED</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="/import_feed" method="POST" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <p class="text-muted">Upload CSV threat intelligence feed.</p>
+                        <input type="file" name="file"
+                            class="form-control rounded-0 bg-black text-white border-secondary" accept=".csv" required>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="submit" class="btn btn-primary rounded-0">INITIATE UPLOAD</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function openCveModal(id, desc, date, score, badgeClass) {
+            // Populate Data
+            document.getElementById('modalCveId').innerText = id;
+            document.getElementById('modalDesc').innerText = desc;
+            document.getElementById('modalDate').innerText = date;
+
+            // Set Badge
+            const badge = document.getElementById('modalScoreBadge');
+            badge.innerText = score;
+            badge.className = `badge rounded-pill px-3 ${badgeClass}`;
+
+            // Set Links
+            document.getElementById('nvdLink').href = `https://nvd.nist.gov/vuln/detail/${id}`;
+            document.getElementById('iosintForm').action = `/enrich/${id}`; // Scanning the CVE ID itself
+
+            // Show Modal
+            var myModal = new bootstrap.Modal(document.getElementById('cveModal'));
+            myModal.show();
+        }
+    </script>
+</body>
+
+</html>

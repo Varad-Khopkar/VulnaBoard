@@ -1,0 +1,5 @@
+Hash,Name,Type,Description,Related_CVEs,Severity
+84c82835a5d21bbcf75a61706d8ab549,WannaCry,Ransomware,The WannaCry ransomware attack was a worldwide cyberattack in May 2017 by the WannaCry ransomware cryptoworm.,CVE-2017-0144,Critical
+c6b0f1bfa9bf5271fb355f377196696b,Stuxnet,Worm,Stuxnet is a malicious computer worm, first uncovered in 2010. It targets SCADA systems and is believed to be responsible for causing substantial damage to Iran's nuclear program.,CVE-2010-2772;CVE-2010-2729,Critical
+0375b4216334c4d16b5c5432b8h36211,Log4Shell Test,Exploit,A test hash representing the Log4Shell vulnerability in Apache Log4j 2.,CVE-2021-44228,Critical
+5e28284f9b5f9071f00342135687251f,Emotet,Trojan,Emotet is a malware strain and a cybercrime operation believed to be based in Ukraine and Russia.,CVE-2019-1234,High
